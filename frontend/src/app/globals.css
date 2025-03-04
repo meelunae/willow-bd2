@@ -1,0 +1,176 @@
+@import "tailwindcss";
+
+:root {
+    --background: #ffffff;
+    --foreground: #171717;
+}
+
+@theme inline {
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --font-sans: var(--font-geist-sans);
+    --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --background: #0a0a0a;
+        --foreground: #ededed;
+    }
+}
+
+/* styles/globals.css */
+@font-face {
+    font-family: "Neue Haas Grotesk";
+    src: url("/fonts/NHaasGroteskTXPro-55Rg.ttf") format("truetype");
+    font-weight: normal;
+    font-style: normal;
+}
+
+body {
+    background: linear-gradient(
+        90deg,
+        rgba(10, 10, 38, 1) 0%,
+        rgba(30, 75, 96, 1) 100%
+    );
+    color: var(--foreground);
+    font-family: "Neue Haas Grotesk", "Cormorant Garamond", sans-serif;
+}
+
+/* Ensure the container takes up the full space and centers content */
+.cover-flow-container {
+    position: relative;
+    max-width: 90%;
+    margin: 0 auto;
+    padding-top: 20px;
+    display: flex;
+    justify-content: center; /* Center the cover flow and buttons horizontally */
+    align-items: center;
+}
+
+/* Use a grid layout to display 5 items per row */
+.cover-flow {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr); /* 5 items per row */
+    gap: 15px;
+    padding: 20px 0;
+    width: 100%;
+    justify-items: center; /* Center items in each grid cell */
+}
+
+/* Styling for individual cover flow items */
+.cover-flow-item {
+    position: relative;
+    width: 100%; /* Ensure cards take up full width of their grid cell */
+    max-width: 250px; /* Set a maximum width */
+    height: 350px; /* Fixed height for consistency */
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    animation: slideIn 0.5s ease-out;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/* Styling for cover image */
+.cover-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Ensure image covers the area properly */
+}
+.cover-flow-item-info {
+    position: relative;
+    backdrop-filter: blur(10px);
+    background-color: rgba(0, 0, 0, 0.6); /* Keeps contrast */
+    padding: 8px 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    color: white; /* Ensure text stays bright */
+}
+
+/* Pseudo-element for background brightness control */
+.cover-flow-item-info::before {
+    content: "";
+    position: absolute;
+    inset: 0; /* Covers the entire parent */
+    background: inherit; /* Inherit the background */
+    filter: brightness(70%); /* Darken bright backgrounds */
+    z-index: -1; /* Ensure it stays behind text */
+}
+
+/* Ensure text doesn't overflow */
+.cover-flow-item-info h3,
+.cover-flow-item-info p {
+    white-space: nowrap; /* Prevent the text from wrapping */
+    overflow: hidden; /* Hide overflowed content */
+    text-overflow: ellipsis; /* Add ellipsis (...) when content overflows */
+}
+
+/* Adjust text size */
+.cover-flow-item-info h3 {
+    font-size: 1rem;
+    margin-bottom: 4px; /* Added margin to separate from the next text */
+}
+
+.cover-flow-item-info p {
+    font-size: 0.875rem;
+    line-height: 1.2;
+    margin: 0; /* Remove margin between paragraph texts */
+}
+
+/* Styling for the previous and next buttons */
+.cover-flow-buttons {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: absolute;
+    left: -60px; /* Adjust this value to move buttons to the left or right */
+    top: 50%;
+    transform: translateY(-50%);
+    gap: 20px; /* Space between the buttons */
+}
+
+.cover-flow-button {
+    background-color: #1d1b3a;
+    color: white;
+    padding: 10px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cover-flow-button:hover {
+    background-color: #0a0a23;
+}
+
+.cover-flow-button svg {
+    width: 24px;
+    height: 24px;
+}
+
+/* Adjust for smaller screens */
+@media (max-width: 768px) {
+    .cover-flow-container {
+        max-width: 100%;
+    }
+
+    .cover-flow {
+        grid-template-columns: repeat(
+            2,
+            1fr
+        ); /* 2 items per row on small screens */
+    }
+
+    .cover-flow-item {
+        height: 250px; /* Adjust height for smaller screens */
+    }
+
+    .cover-flow-buttons {
+        left: -45px; /* Adjust positioning on smaller screens */
+    }
+}
