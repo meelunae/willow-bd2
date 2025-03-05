@@ -2,40 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
-import SearchTabs from "./SearchTabs"; // Import the tab system
+import SearchTabs from "./SearchTabs";
+import { albumCoverMapping } from "../constants";
 
-const albumCoverMapping: Record<string, string> = {
-  "1989": "1989.jpg",
-  "1989 (Deluxe)": "1989.jpg",
-  "1989 (Taylor's Version)": "1989tv.jpg",
-  "1989 (Taylor's Version) [Deluxe]": "1989tvd.jpg",
-  "Fearless (International Version)": "f.jpg",
-  "Fearless (Platinum Edition)": "ftv.jpg",
-  "Fearless (Taylor's Version)": "ftv.jpg",
-  "Live From Clear Channel Stripped 2008": "e.jpg",
-  Lover: "l.jpg",
-  Midnights: "mn.jpg",
-  "Midnights (3am Edition)": "mn3am.jpg",
-  "Midnights (The Til Dawn Edition)": "mntdv.jpg",
-  Red: "r.jpg",
-  "Red (Deluxe Edition)": "rd.jpg",
-  "Red (Taylor's Version)": "rtv.jpg",
-  "Speak Now": "sn.jpg",
-  "Speak Now (Deluxe Package)": "sntv.jpg",
-  "Speak Now (Taylor's Version)": "sntv.jpg",
-  "Speak Now World Tour Live": "sntv.jpg",
-  "THE TORTURED POETS DEPARTMENT": "ttpd.jpg",
-  "THE TORTURED POETS DEPARTMENT: THE ANTHOLOGY": "ttpdta.jpg",
-  "Taylor Swift (Deluxe Edition)": "ts.jpg",
-  evermore: "e.jpg",
-  "evermore (deluxe version)": "e.jpg",
-  folklore: "f.jpg",
-  "folklore (deluxe version)": "f.jpg",
-  "folklore: the long pond studio sessions (from the Disney+ special) [deluxe edition]":
-    "ftlpss.jpg",
-  reputation: "rep.jpg",
-  "reputation Stadium Tour Surprise Song Playlist": "rep.jpg",
-};
 interface AdvancedSearchProps {
   isOpen: boolean;
   onClose: () => void;
@@ -66,9 +35,7 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
   useEffect(() => {
     const fetchAlbums = async () => {
       try {
-        const response = await fetch(
-          "http://localhost:3000/api/tracks/finally",
-        );
+        const response = await fetch("http://localhost:3000/api/tracks/albums");
         const data = await response.json();
         setAlbums(data);
       } catch (error) {

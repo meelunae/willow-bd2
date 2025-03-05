@@ -42,67 +42,54 @@ async function routes(server: FastifyInstance, options: Object) {
     },
   );
 
-  /**
-   * Search by Tempo (BPM range)
-   */
-  server.get(
-    "/search/tempo",
-    async (
-      req: FastifyRequest<{ Querystring: { min: string; max: string } }>,
-      reply: FastifyReply,
-    ) => {
-      try {
-        const { min, max } = req.query;
-        if (!min || !max)
-          return reply
-            .status(400)
-            .send({ error: "Both min and max tempo are required" });
-
-        const tracks: ITrack[] = await Track.find({
-          tempo: { $gte: parseFloat(min), $lte: parseFloat(max) },
-        });
-        reply.send(tracks);
-      } catch (err) {
-        server.log.error(err);
-        reply.status(500).send({ error: "Internal Server Error" });
-      }
-    },
-  );
-
   server.get(
     "/search/filters",
     async (
       req: FastifyRequest<{
         Querystring: {
+          title?: string;
           album?: string;
-          min_duration?: string;
-          max_duration?: string;
+          minDuration?: string;
+          maxDuration?: string;
+          minBPM?: string;
+          maxBPM?: string;
           mood?: string;
         };
       }>,
       reply: FastifyReply,
     ) => {
       try {
-        const { album, min_duration, max_duration, mood } = req.query;
+        const { title, album, minDuration, maxDuration, minBPM, maxBPM, mood } =
+          req.query;
         let filter: any = {};
 
+        if (title) {
+          filter.name = { $regex: title, $options: "i" };
+        }
         // Handle album filter
         if (album) {
-          const albumsArray = album.split(","); // Assuming album filter can handle multiple albums.
+          const albumsArray = album.split(",");
           filter.album = { $in: albumsArray };
         }
 
         // Handle duration filter (min and max)
-        if (min_duration || max_duration) {
+        if (minDuration || maxDuration) {
           const durationFilter: any = {};
-          if (min_duration) durationFilter.$gte = parseInt(min_duration);
-          if (max_duration) durationFilter.$lte = parseInt(max_duration);
+          if (minDuration) durationFilter.$gte = parseInt(minDuration);
+          if (maxDuration) durationFilter.$lte = parseInt(maxDuration);
           filter.duration_ms = durationFilter;
+        }
+
+        if (minBPM || maxBPM) {
+          const bpmFilter: any = {};
+          if (minBPM) bpmFilter.$gte = parseInt(minBPM);
+          if (maxBPM) bpmFilter.$lte = parseInt(maxBPM);
+          filter.tempo = bpmFilter;
         }
 
         // Handle mood filter
         if (mood) {
-          filter.mood = { $regex: mood, $options: "i" }; // Assuming you store mood as a string in the database
+          filter.mood = { $regex: mood, $options: "i" };
         }
 
         // Fetch the filtered tracks
@@ -115,51 +102,8 @@ async function routes(server: FastifyInstance, options: Object) {
     },
   );
 
-  /**
-   * Vibe-Based Search: Match songs based on mood parameters
-   */
   server.get(
-    "/search/vibe",
-    async (
-      req: FastifyRequest<{ Querystring: { mood: string } }>,
-      reply: FastifyReply,
-    ) => {
-      try {
-        const { mood } = req.query;
-        if (!mood) return reply.status(400).send({ error: "Mood is required" });
-
-        let filter: any = {};
-        switch (mood.toLowerCase()) {
-          case "happy":
-            filter = { danceability: { $gte: 0.6 }, valence: { $gte: 0.6 } };
-            break;
-          case "sad":
-            filter = { danceability: { $lte: 0.4 }, valence: { $lte: 0.4 } };
-            break;
-          case "energetic":
-            filter = { energy: { $gte: 0.7 }, tempo: { $gte: 120 } };
-            break;
-          case "calm":
-            filter = { energy: { $lte: 0.4 }, tempo: { $lte: 100 } };
-            break;
-          default:
-            return reply.status(400).send({
-              error:
-                "Invalid mood. Available moods: happy, sad, energetic, calm.",
-            });
-        }
-
-        const tracks: ITrack[] = await Track.find(filter);
-        reply.send(tracks);
-      } catch (err) {
-        server.log.error(err);
-        reply.status(500).send({ error: "Internal Server Error" });
-      }
-    },
-  );
-
-  server.get(
-    "/finally",
+    "/albums",
     async (
       req: FastifyRequest<{ Querystring: { mood: string } }>,
       reply: FastifyReply,
@@ -172,6 +116,61 @@ async function routes(server: FastifyInstance, options: Object) {
           },
         );
         reply.send(tracks);
+      } catch (err) {
+        server.log.error(err);
+        reply.status(500).send({ error: "Internal Server Error" });
+      }
+    },
+  );
+
+  // Discography Analytics Route
+  server.get(
+    "/analytics",
+    async (_req: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const tracks: ITrack[] = await Track.find();
+        if (!tracks.length) {
+          return reply.send({ error: "No data available" });
+        }
+
+        // Total songs
+        const totalSongs = tracks.length;
+
+        // Total albums (unique count of album names)
+        const totalAlbums = new Set(tracks.map((track) => track.album)).size;
+
+        // Total duration (sum of duration_ms in minutes)
+        const totalDurationMinutes = Math.round(
+          tracks.reduce((sum, track) => sum + track.duration_ms, 0) / 60000,
+        );
+
+        // Sorting tracks by release date to find first and last album
+        const sortedTracks = tracks.sort(
+          (a, b) =>
+            new Date(a.release_date).getTime() -
+            new Date(b.release_date).getTime(),
+        );
+
+        const firstAlbumYear = new Date(
+          sortedTracks[0].release_date,
+        ).getFullYear();
+        const lastAlbumDate = new Date(
+          sortedTracks[sortedTracks.length - 1].release_date,
+        );
+
+        const yearsSinceFirstAlbum = new Date().getFullYear() - firstAlbumYear;
+        const daysSinceLastAlbum = Math.floor(
+          (new Date().getTime() - lastAlbumDate.getTime()) /
+            (1000 * 60 * 60 * 24),
+        );
+
+        reply.send({
+          totalSongs,
+          totalAlbums,
+          totalDurationMinutes,
+          yearsSinceFirstAlbum,
+          daysSinceLastAlbum,
+        });
       } catch (err) {
         server.log.error(err);
         reply.status(500).send({ error: "Internal Server Error" });

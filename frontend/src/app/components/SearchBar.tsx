@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import AdvancedSearch from "./AdvancedSearch";
-import { Track } from "./types";
+import { Track } from "../types";
 
 interface SearchBarProps {
-  setTracks: (tracks: Track[]) => void;
-  resetIndex: () => void; // Add this prop
+  setTracks?: Dispatch<SetStateAction<Track[]>>;
+  resetIndex?: () => void;
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({ setTracks, resetIndex }) => {
@@ -14,6 +14,9 @@ const SearchBar: React.FC<SearchBarProps> = ({ setTracks, resetIndex }) => {
   const [query, setQuery] = useState("");
   const [selectedAlbums, setSelectedAlbums] = useState<string[]>([]);
   const [minDuration, setMinDuration] = useState<number | undefined>(undefined);
+  const [maxDuration, setMaxDuration] = useState<number | undefined>(undefined);
+  const [minBPM, setMinBPM] = useState<number | undefined>(undefined);
+  const [maxBPM, setMaxBPM] = useState<number | undefined>(undefined);
   const [mood, setMood] = useState<string | undefined>(undefined);
   const [isAdvancedOpen, setAdvancedOpen] = useState(false);
 
@@ -30,9 +33,22 @@ const SearchBar: React.FC<SearchBarProps> = ({ setTracks, resetIndex }) => {
       url += `title?title=${query}`;
     } else if (searchType === "filters") {
       // Search by filters (Advanced Search)
-      url += `filters?album=${selectedAlbums.join(",")}`;
+      url += `filters?`;
+      if (selectedAlbums.length > 0) {
+        url += `album=${selectedAlbums.join(",")}`;
+      }
+      if (query.trim() !== "") {
+        url += `&title=${query}`;
+      }
       if (minDuration !== undefined) url += `&minDuration=${minDuration}`;
+      if (maxDuration !== undefined) url += `&maxDuration=${maxDuration}`;
+      if (minBPM !== undefined) url += `&minBPM=${minBPM}`;
+      if (maxBPM !== undefined) url += `&maxBPM=${maxBPM}`;
       if (mood) url += `&mood=${mood}`;
+    }
+
+    if (!setTracks || !resetIndex) {
+      return null;
     }
 
     try {
@@ -50,10 +66,16 @@ const SearchBar: React.FC<SearchBarProps> = ({ setTracks, resetIndex }) => {
   const handleApplyFilters = (filters: {
     albums?: string[];
     minDuration?: number;
+    maxDuration?: number;
+    minBPM?: number;
+    maxBPM?: number;
     mood?: string;
   }) => {
     setSelectedAlbums(filters.albums || []);
     setMinDuration(filters.minDuration);
+    setMaxDuration(filters.maxDuration);
+    setMinBPM(filters.minBPM);
+    setMaxBPM(filters.maxBPM);
     setMood(filters.mood);
     setSearchType("filters");
   };
