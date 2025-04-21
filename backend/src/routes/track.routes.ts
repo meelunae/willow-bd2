@@ -1,5 +1,6 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { ITrack, Track } from "../models/track.model";
+import { Album } from "../models/album.model";
 
 async function routes(server: FastifyInstance, options: Object) {
   /**
@@ -9,7 +10,10 @@ async function routes(server: FastifyInstance, options: Object) {
     try {
       const tracks: ITrack[] = await Track.find()
         .sort({ popularity: -1 })
-        .limit(50);
+        .limit(50)
+        .populate({
+          path: "album_id",
+        });
       reply.send(tracks);
     } catch (err) {
       server.log.error(err);
@@ -33,7 +37,7 @@ async function routes(server: FastifyInstance, options: Object) {
 
         const tracks: ITrack[] = await Track.find({
           name: { $regex: title, $options: "i" },
-        });
+        }).populate("album_id");
         reply.send(tracks);
       } catch (err) {
         server.log.error(err);
@@ -66,10 +70,22 @@ async function routes(server: FastifyInstance, options: Object) {
         if (title) {
           filter.name = { $regex: title, $options: "i" };
         }
-        // Handle album filter
+
+        // Get album IDs if album names are provided
         if (album) {
           const albumsArray = album.split(",");
-          filter.album = { $in: albumsArray };
+          // Find album IDs that match the provided album names
+          const matchingAlbums = await Album.find({
+            name: { $in: albumsArray.map((name) => new RegExp(name, "i")) },
+          });
+          const albumIds = matchingAlbums.map((album) => album._id);
+
+          if (albumIds.length) {
+            filter.album_id = { $in: albumIds };
+          } else {
+            // If no matching albums found, return empty result
+            return reply.send([]);
+          }
         }
 
         // Handle duration filter (min and max)
@@ -92,85 +108,9 @@ async function routes(server: FastifyInstance, options: Object) {
           filter.mood = { $regex: mood, $options: "i" };
         }
 
-        // Fetch the filtered tracks
-        const tracks: ITrack[] = await Track.find(filter);
+        // Fetch the filtered tracks and populate the album information
+        const tracks: ITrack[] = await Track.find(filter).populate("album_id");
         reply.send(tracks);
-      } catch (err) {
-        server.log.error(err);
-        reply.status(500).send({ error: "Internal Server Error" });
-      }
-    },
-  );
-
-  server.get(
-    "/albums",
-    async (
-      req: FastifyRequest<{ Querystring: { mood: string } }>,
-      reply: FastifyReply,
-    ) => {
-      try {
-        const tracks: ITrack[] = await Track.collection.distinct(
-          "album",
-          function (error: any, results: any) {
-            console.log(results);
-          },
-        );
-        reply.send(tracks);
-      } catch (err) {
-        server.log.error(err);
-        reply.status(500).send({ error: "Internal Server Error" });
-      }
-    },
-  );
-
-  // Discography Analytics Route
-  server.get(
-    "/analytics",
-    async (_req: FastifyRequest, reply: FastifyReply) => {
-      try {
-        const tracks: ITrack[] = await Track.find();
-        if (!tracks.length) {
-          return reply.send({ error: "No data available" });
-        }
-
-        // Total songs
-        const totalSongs = tracks.length;
-
-        // Total albums (unique count of album names)
-        const totalAlbums = new Set(tracks.map((track) => track.album)).size;
-
-        // Total duration (sum of duration_ms in minutes)
-        const totalDurationMinutes = Math.round(
-          tracks.reduce((sum, track) => sum + track.duration_ms, 0) / 60000,
-        );
-
-        // Sorting tracks by release date to find first and last album
-        const sortedTracks = tracks.sort(
-          (a, b) =>
-            new Date(a.release_date).getTime() -
-            new Date(b.release_date).getTime(),
-        );
-
-        const firstAlbumYear = new Date(
-          sortedTracks[0].release_date,
-        ).getFullYear();
-        const lastAlbumDate = new Date(
-          sortedTracks[sortedTracks.length - 1].release_date,
-        );
-
-        const yearsSinceFirstAlbum = new Date().getFullYear() - firstAlbumYear;
-        const daysSinceLastAlbum = Math.floor(
-          (new Date().getTime() - lastAlbumDate.getTime()) /
-            (1000 * 60 * 60 * 24),
-        );
-
-        reply.send({
-          totalSongs,
-          totalAlbums,
-          totalDurationMinutes,
-          yearsSinceFirstAlbum,
-          daysSinceLastAlbum,
-        });
       } catch (err) {
         server.log.error(err);
         reply.status(500).send({ error: "Internal Server Error" });
@@ -178,4 +118,5 @@ async function routes(server: FastifyInstance, options: Object) {
     },
   );
 }
+
 module.exports = routes;

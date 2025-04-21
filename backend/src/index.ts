@@ -2,6 +2,7 @@ import { fastify, FastifyReply, FastifyRequest } from "fastify";
 import fastifyCors from "@fastify/cors";
 import mongoose from "mongoose";
 
+const albumRoutes = require("./routes/album.routes");
 const trackRoutes = require("./routes/track.routes");
 
 const server = fastify({
@@ -19,6 +20,7 @@ server
   });
 server.register(fastifyCors);
 server.register(trackRoutes, { prefix: "/api/tracks" });
+server.register(albumRoutes, { prefix: "/api/albums" });
 
 mongoose
   .connect("mongodb://mongo:27017/willow")
