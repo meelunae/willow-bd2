@@ -17,7 +17,7 @@ const useAnalytics = () => {
     const fetchAnalytics = async () => {
       try {
         const response = await fetch(
-          "http://localhost:3000/api/tracks/analytics",
+          "http://localhost:3000/api/analytics",
         );
         if (!response.ok) throw new Error("Failed to fetch analytics");
         const jsonData: AnalyticsData = await response.json();

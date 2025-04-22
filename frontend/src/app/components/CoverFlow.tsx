@@ -2,15 +2,8 @@
 
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa"; // Import arrows for navigation
 import { albumCoverMapping, primaryColors } from "../constants";
-
-interface Track {
-  id: string;
-  name: string;
-  album: string;
-  release_date: string;
-  duration: number;
-  popularity: number;
-}
+import Image from "next/image";
+import { Track } from "../types";
 
 interface CoverFlowProps {
   tracks: Track[];
@@ -48,9 +41,11 @@ const CoverFlow: React.FC<CoverFlowProps> = ({
       <div className="cover-flow">
         {visibleTracks.map((track) => (
           <div key={track.id} className="cover-flow-item">
-            <img
+            <Image
               src={`/covers/${albumCoverMapping[track.album]}`}
               alt={track.album}
+              width={200}
+              height={200}
               className="cover-image w-full h-full object-cover rounded-t-lg"
             />
 
@@ -63,7 +58,7 @@ const CoverFlow: React.FC<CoverFlowProps> = ({
               <h3 className="font-bold text-xl">{track.name}</h3>
               <p className="text-lg font-semibold">{track.album}</p>
               <p className="text-sm font-normal opacity-65">
-                {new Date(track.release_date).toISOString().split("T")[0]}
+                {track.album_id?.release_date ? new Date(track.album_id.release_date).toISOString().split("T")[0] : ''}
               </p>
             </div>
           </div>

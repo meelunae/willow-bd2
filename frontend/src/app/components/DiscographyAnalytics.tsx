@@ -18,8 +18,7 @@ const DiscographyAnalytics: React.FC<DiscographyAnalyticsComponentProps> = ({
   data,
 }) => {
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const cardsPerPage = 6; // Adjust based on your layout
-
+  const cardsPerPage = 6;
   // Analytics data formatted for display
   const metrics = [
     { label: "Total Songs", value: data.totalSongs },

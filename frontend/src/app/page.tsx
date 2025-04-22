@@ -3,15 +3,7 @@
 import Navbar from "./components/Navbar";
 import TopTracks from "./components/TopTracks";
 import { useState } from "react";
-
-interface Track {
-  id: string;
-  name: string;
-  album: string;
-  release_date: string;
-  duration: number;
-  popularity: number;
-}
+import { Track } from "./types";
 
 const HomePage: React.FC = () => {
   const [tracks, setTracks] = useState<Track[]>([]);

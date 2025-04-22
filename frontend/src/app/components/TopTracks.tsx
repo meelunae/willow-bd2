@@ -2,15 +2,7 @@
 
 import { useEffect } from "react";
 import CoverFlow from "../components/CoverFlow";
-
-interface Track {
-  id: string;
-  name: string;
-  album: string;
-  release_date: string;
-  duration: number;
-  popularity: number;
-}
+import { Track } from "../types";
 
 interface TopTracksProps {
   tracks: Track[];
@@ -33,7 +25,7 @@ const TopTracks: React.FC<TopTracksProps> = ({
         .then((data: Track[]) => setTracks(data.slice(0, 50)))
         .catch((err) => console.error("Error fetching tracks:", err));
     }
-  }, []);
+  }, [tracks.length, setTracks]);
 
   return (
     <div className="px-4 py-4">

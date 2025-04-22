@@ -4,6 +4,13 @@ import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import SearchTabs from "./SearchTabs";
 import { albumCoverMapping } from "../constants";
+import Image from "next/image";
+
+interface Album {
+  _id: string;
+  album_name: string;
+  release_date: string;
+}
 
 interface AdvancedSearchProps {
   isOpen: boolean;
@@ -30,12 +37,12 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
   const [minBPM, setMinBPM] = useState<number | undefined>(undefined);
   const [maxBPM, setMaxBPM] = useState<number | undefined>(undefined);
   const [mood, setMood] = useState<string | undefined>(undefined);
-  const [albums, setAlbums] = useState<string[]>([]);
+  const [albums, setAlbums] = useState<Album[]>([]);
 
   useEffect(() => {
     const fetchAlbums = async () => {
       try {
-        const response = await fetch("http://localhost:3000/api/tracks/albums");
+        const response = await fetch("http://localhost:3000/api/albums");
         const data = await response.json();
         setAlbums(data);
       } catch (error) {
@@ -48,9 +55,9 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
     }
   }, [isOpen]);
 
-  const toggleAlbumSelection = (album: string) => {
+  const toggleAlbumSelection = (albumId: string) => {
     setSelectedAlbums((prev) =>
-      prev.includes(album) ? prev.filter((a) => a !== album) : [...prev, album],
+      prev.includes(albumId) ? prev.filter((a) => a !== albumId) : [...prev, albumId],
     );
   };
 
@@ -88,18 +95,20 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
             <div className="grid grid-cols-3 gap-4 mt-4">
               {albums.map((album) => (
                 <div
-                  key={album}
+                  key={album._id}
                   className={`relative cursor-pointer transition ${
-                    selectedAlbums.includes(album) ? "" : "grayscale opacity-50"
+                    selectedAlbums.includes(album._id) ? "" : "grayscale opacity-50"
                   }`}
-                  onClick={() => toggleAlbumSelection(album)}
+                  onClick={() => toggleAlbumSelection(album._id)}
                 >
-                  <img
-                    src={`/covers/${albumCoverMapping[album]}`}
-                    alt={album}
+                  <Image
+                    src={`/covers/${albumCoverMapping[album.album_name]}`}
+                    alt={album.album_name}
+                    width={200}
+                    height={200}
                     className="rounded-lg shadow-md"
                   />
-                  <p className="text-center text-sm mt-2">{album}</p>
+                  <p className="text-center text-sm mt-2">{album.album_name}</p>
                 </div>
               ))}
             </div>

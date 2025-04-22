@@ -1,6 +1,9 @@
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+
 export const albumCoverMapping: Record<string, string> = {
   "1989 (Deluxe)": "1989.jpg",
   "1989 (Taylor's Version) [Deluxe]": "1989tvd.jpg",
+  "1989 (Taylor's Version)": "1989tvd.jpg",
   "Fearless (Platinum Edition)": "fl.png",
   "Fearless (Taylor's Version)": "ftv.jpg",
   Lover: "l.jpg",
