@@ -45,7 +45,7 @@ This app is a proof-of-concept for my Databases II course and an experiment at "
 ### Backend (.env)
 ```env
 # Required
-MONGODB_URI=mongodb://mongo:27017/willow_test
+MONGODB_URI=mongodb://mongo:27017/willow
 JWT_SECRET=your_jwt_secret_key
 
 # Optional
@@ -63,8 +63,8 @@ NEXT_PUBLIC_API_URL=http://localhost:3000/api
 
 1. Clone the repository:
 ```bash
-git clone [repository-url]
-cd willow
+git clone https://github.com/meelunae/willow-bd2
+cd willow-bd2
 ```
 
 2. Install dependencies:
