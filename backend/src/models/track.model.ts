@@ -17,6 +17,7 @@ interface ITrack extends Document {
   valence: number;
   popularity: number;
   duration_ms: number;
+  is_visible: boolean;
 }
 
 const trackSchema = new Schema<ITrack>(
@@ -41,6 +42,7 @@ const trackSchema = new Schema<ITrack>(
     valence: { type: Number, required: true },
     popularity: { type: Number, required: true },
     duration_ms: { type: Number, required: true },
+    is_visible: { type: Boolean, default: true },
   },
   {
     toJSON: {

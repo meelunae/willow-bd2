@@ -2,6 +2,11 @@ import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { ITrack, Track } from "../models/track.model";
 import { Album } from "../models/album.model";
 
+interface GetTracksQuery {
+  page?: string;
+  limit?: string;
+}
+
 async function routes(server: FastifyInstance, options: Object) {
   /**
    * Homepage: Get top 50 most popular songs
@@ -73,19 +78,8 @@ async function routes(server: FastifyInstance, options: Object) {
 
         // Get album IDs if album names are provided
         if (album) {
-          const albumsArray = album.split(",");
-          // Find album IDs that match the provided album names
-          const matchingAlbums = await Album.find({
-            name: { $in: albumsArray.map((name) => new RegExp(name, "i")) },
-          });
-          const albumIds = matchingAlbums.map((album) => album._id);
-
-          if (albumIds.length) {
-            filter.album_id = { $in: albumIds };
-          } else {
-            // If no matching albums found, return empty result
-            return reply.send([]);
-          }
+          const albumIds = album.split(",");
+          filter.album_id = { $in: albumIds };
         }
 
         // Handle duration filter (min and max)
@@ -116,6 +110,240 @@ async function routes(server: FastifyInstance, options: Object) {
         reply.status(500).send({ error: "Internal Server Error" });
       }
     },
+  );
+
+  /**
+   * Get all tracks with pagination (admin only)
+   */
+  server.get<{ Querystring: GetTracksQuery }>(
+    "/admin",
+    { preHandler: [server.authenticate, server.isAdmin] },
+    async (
+      request: FastifyRequest<{ Querystring: GetTracksQuery }>,
+      reply: FastifyReply,
+    ) => {
+      try {
+        const page = parseInt(request.query.page || "1");
+        const limit = parseInt(request.query.limit || "10");
+        const skip = (page - 1) * limit;
+
+        const [tracks, total] = await Promise.all([
+          Track.find()
+            .populate('album_id', 'album_name release_date')
+            .skip(skip)
+            .limit(limit),
+          Track.countDocuments(),
+        ]);
+
+        reply.send({
+          tracks,
+          totalPages: Math.ceil(total / limit),
+          currentPage: page,
+          total,
+        });
+      } catch (err) {
+        server.log.error(err);
+        reply.status(500).send({ error: "Internal Server Error" });
+      }
+    },
+  );
+
+  /**
+   * Update track visibility (admin only)
+   */
+  server.patch<{ Params: { id: string }; Body: { is_visible: boolean } }>(
+    "/:id/visibility",
+    { preHandler: [server.authenticate, server.isAdmin] },
+    async (
+      request: FastifyRequest<{
+        Params: { id: string };
+        Body: { is_visible: boolean };
+      }>,
+      reply: FastifyReply,
+    ) => {
+      try {
+        const track = await Track.findByIdAndUpdate(
+          request.params.id,
+          { is_visible: request.body.is_visible },
+          { new: true },
+        );
+
+        if (!track) {
+          return reply.status(404).send({ error: "Track not found" });
+        }
+
+        reply.send(track);
+      } catch (err) {
+        server.log.error(err);
+        reply.status(500).send({ error: "Internal Server Error" });
+      }
+    },
+  );
+
+  /**
+   * Delete track (admin only)
+   */
+  server.delete<{ Params: { id: string } }>(
+    "/:id",
+    { preHandler: [server.authenticate, server.isAdmin] },
+    async (
+      request: FastifyRequest<{ Params: { id: string } }>,
+      reply: FastifyReply,
+    ) => {
+      try {
+        const track = await Track.findByIdAndDelete(request.params.id);
+
+        if (!track) {
+          return reply.status(404).send({ error: "Track not found" });
+        }
+
+        reply.send({ message: "Track deleted successfully" });
+      } catch (err) {
+        server.log.error(err);
+        reply.status(500).send({ error: "Internal Server Error" });
+      }
+    },
+  );
+
+  /**
+   * Update track (admin only)
+   */
+  server.patch<{ 
+    Params: { id: string }; 
+    Body: { 
+      name: string;
+      release_date: string;
+      popularity: number;
+      acousticness: number;
+      danceability: number;
+      energy: number;
+      instrumentalness: number;
+      liveness: number;
+      loudness: number;
+      speechiness: number;
+      tempo: number;
+      valence: number;
+    } 
+  }>(
+    "/:id",
+    { preHandler: [server.authenticate, server.isAdmin] },
+    async (request: FastifyRequest<{ 
+      Params: { id: string }; 
+      Body: { 
+        name: string;
+        release_date: string;
+        popularity: number;
+        acousticness: number;
+        danceability: number;
+        energy: number;
+        instrumentalness: number;
+        liveness: number;
+        loudness: number;
+        speechiness: number;
+        tempo: number;
+        valence: number;
+      } 
+    }>, reply: FastifyReply) => {
+      try {
+        const track = await Track.findByIdAndUpdate(
+          request.params.id,
+          {
+            name: request.body.name,
+            release_date: request.body.release_date,
+            popularity: request.body.popularity,
+            acousticness: request.body.acousticness,
+            danceability: request.body.danceability,
+            energy: request.body.energy,
+            instrumentalness: request.body.instrumentalness,
+            liveness: request.body.liveness,
+            loudness: request.body.loudness,
+            speechiness: request.body.speechiness,
+            tempo: request.body.tempo,
+            valence: request.body.valence,
+          },
+          { new: true }
+        );
+
+        if (!track) {
+          return reply.status(404).send({ error: "Track not found" });
+        }
+
+        reply.send(track);
+      } catch (err) {
+        server.log.error(err);
+        reply.status(500).send({ error: "Internal Server Error" });
+      }
+    }
+  );
+
+  /**
+   * Create track (admin only)
+   */
+  server.post<{ 
+    Body: { 
+      name: string;
+      album_id: string;
+      release_date: string;
+      duration_ms: number;
+      popularity: number;
+      acousticness: number;
+      danceability: number;
+      energy: number;
+      instrumentalness: number;
+      liveness: number;
+      loudness: number;
+      speechiness: number;
+      tempo: number;
+      valence: number;
+    } 
+  }>(
+    "/",
+    { preHandler: [server.authenticate, server.isAdmin] },
+    async (request: FastifyRequest<{ 
+      Body: { 
+        name: string;
+        album_id: string;
+        release_date: string;
+        duration_ms: number;
+        popularity: number;
+        acousticness: number;
+        danceability: number;
+        energy: number;
+        instrumentalness: number;
+        liveness: number;
+        loudness: number;
+        speechiness: number;
+        tempo: number;
+        valence: number;
+      } 
+    }>, reply: FastifyReply) => {
+      try {
+        const track = new Track({
+          name: request.body.name,
+          album_id: request.body.album_id,
+          release_date: request.body.release_date,
+          duration_ms: request.body.duration_ms,
+          popularity: request.body.popularity,
+          acousticness: request.body.acousticness,
+          danceability: request.body.danceability,
+          energy: request.body.energy,
+          instrumentalness: request.body.instrumentalness,
+          liveness: request.body.liveness,
+          loudness: request.body.loudness,
+          speechiness: request.body.speechiness,
+          tempo: request.body.tempo,
+          valence: request.body.valence,
+          is_visible: true,
+        });
+
+        await track.save();
+        const populatedTrack = await Track.findById(track._id).populate('album_id', 'album_name release_date');
+        reply.status(201).send(populatedTrack);
+      } catch (err) {
+        server.log.error(err);
+        reply.status(500).send({ error: "Internal Server Error" });
+      }
+    }
   );
 }
 
