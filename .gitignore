@@ -1,7 +1,12 @@
 .DS_Store
+.ropeproject
 .next
 data/
+dataset/
 *.js
 node_modules/
 build/
 package-lock.json
+.env
+.env.local
+.env.*.local
