@@ -1,5 +1,6 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { IAlbum, Album } from "../models/album.model";
+import { Track } from "../models/track.model";
 
 interface GetAlbumsQuery {
   page?: string;
@@ -96,13 +97,20 @@ async function routes(server: FastifyInstance, options: Object) {
       reply: FastifyReply,
     ) => {
       try {
+        // First, delete all tracks associated with this album
+        await Track.deleteMany({ album_id: request.params.id });
+
+        // Then delete the album
         const album = await Album.findByIdAndDelete(request.params.id);
 
         if (!album) {
           return reply.status(404).send({ error: "Album not found" });
         }
 
-        reply.send({ message: "Album deleted successfully" });
+        reply.send({ 
+          message: "Album and associated tracks deleted successfully",
+          deletedTracks: await Track.countDocuments({ album_id: request.params.id })
+        });
       } catch (err) {
         server.log.error(err);
         reply.status(500).send({ error: "Internal Server Error" });
