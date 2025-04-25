@@ -99,7 +99,28 @@ async function routes(server: FastifyInstance, options: Object) {
 
         // Handle mood filter
         if (mood) {
-          filter.mood = { $regex: mood, $options: "i" };
+          switch (mood.toLowerCase()) {
+            case "happy":
+              filter.valence = { $gte: 0.6 };
+              filter.energy = { $gte: 0.6 };
+              filter.danceability = { $gte: 0.6 };
+              break;
+            case "sad":
+              filter.valence = { $lte: 0.4 };
+              filter.energy = { $lte: 0.4 };
+              filter.tempo = { $lte: 100 };
+              break;
+            case "energetic":
+              filter.energy = { $gte: 0.7 };
+              filter.tempo = { $gte: 120 };
+              filter.loudness = { $gte: -10 };
+              break;
+            case "calm":
+              filter.energy = { $lte: 0.4 };
+              filter.acousticness = { $gte: 0.6 };
+              filter.loudness = { $lte: -15 };
+              break;
+          }
         }
 
         // Fetch the filtered tracks and populate the album information

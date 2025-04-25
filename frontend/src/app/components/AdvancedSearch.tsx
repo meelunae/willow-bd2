@@ -185,7 +185,7 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
                           ? "bg-blue-500"
                           : "bg-gray-800 hover:bg-gray-700"
                       }`}
-                      onClick={() => setMood(option)}
+                      onClick={() => setMood(mood === option ? undefined : option)}
                     >
                       {option.charAt(0).toUpperCase() + option.slice(1)}
                     </button>
