@@ -1,14 +1,14 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { User } from "../models/user.model";
-import jwt from "jsonwebtoken";
+import jwt, { SignOptions } from "jsonwebtoken";
 
-
+// Validate required environment variables
 if (!process.env.JWT_SECRET) {
   console.error('Missing required environment variable: JWT_SECRET');
   process.exit(1);
 }
 
-const JWT_SECRET = process.env.JWT_SECRET
+const JWT_SECRET = process.env.JWT_SECRET as string;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "24h";
 
 interface RegisterBody {
@@ -46,11 +46,11 @@ async function routes(fastify: FastifyInstance, options: Object) {
 
       await user.save();
 
-      // Generate token
+      // Generate token with proper typing
       const token = jwt.sign(
         { userId: user._id, role: user.role },
         JWT_SECRET,
-        { expiresIn: JWT_EXPIRES_IN },
+        { expiresIn: JWT_EXPIRES_IN } as SignOptions
       );
 
       reply.send({
@@ -86,11 +86,11 @@ async function routes(fastify: FastifyInstance, options: Object) {
         return reply.status(401).send({ error: "Invalid credentials" });
       }
 
-      // Generate token
+      // Generate token with proper typing
       const token = jwt.sign(
         { userId: user._id, role: user.role },
         JWT_SECRET,
-        { expiresIn: JWT_EXPIRES_IN },
+        { expiresIn: JWT_EXPIRES_IN } as SignOptions
       );
 
       reply.send({
