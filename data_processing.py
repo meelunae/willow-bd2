@@ -73,7 +73,7 @@ for _, row in df_filtered.iterrows():
     release_date = row['release_date']
 
     album_key = f"{album_name}_{release_date}"
-    album_id = hashlib.md5(album_key.encode()).hexdigest()
+    album_id = "album_" + hashlib.md5(album_key.encode()).hexdigest()
 
     if album_id not in albums:
         albums[album_id] = {
@@ -85,7 +85,7 @@ for _, row in df_filtered.iterrows():
 tracks = []
 for _, row in df_filtered.iterrows():
     album_key = f"{row['album']}_{row['release_date']}"
-    album_id = hashlib.md5(album_key.encode()).hexdigest()
+    album_id = "album_" + hashlib.md5(album_key.encode()).hexdigest()
 
     track = {
         "id": row["id"],
